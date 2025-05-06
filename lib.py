@@ -1,0 +1,33 @@
+import os
+from datetime import datetime
+
+TARGETS = {
+    'crazygames': 'https://www.crazygames.com/sitemap',
+    'poki': 'https://poki.com/en/sitemaps/games.xml'
+}
+
+SITEMAP_PATH = 'data/sitemaps'
+
+def find_latest_sitemap(site, sitemap_path=SITEMAP_PATH):
+    """
+    查找指定站点最新的sitemap文件
+    
+    Args:
+        site: 站点名称
+        sitemap_path: sitemap文件存储路径，默认为'data/sitemap'
+        
+    Returns:
+        最新sitemap的时间对象，如果没有找到则返回None
+    """
+    files = os.listdir(sitemap_path)
+    last_time = None
+    for file in files:
+        if file.startswith(site):
+            [_, date, time] = file.split('.')[0].split('_')
+            # 最新时间
+            if last_time is None:
+                last_time = datetime.strptime(f"{date}_{time}", "%Y%m%d_%H%M%S")
+            else:
+                last_time = max(last_time, datetime.strptime(f"{date}_{time}", "%Y%m%d_%H%M%S"))
+    
+    return last_time 
