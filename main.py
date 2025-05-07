@@ -2,7 +2,7 @@ import requests
 import os
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from lib import find_latest_sitemap, TARGETS, SITEMAP_PATH
+from lib import find_latest_sitemap, TARGETS, SITEMAP_PATH, get_game_urls
 
 def fetch_sitemap(target):
     res = requests.get(TARGETS[target])
@@ -47,20 +47,14 @@ def clean_duplicate_sitemaps(site, sitemap_path=SITEMAP_PATH):
     
     # 对比相邻的文件
     for i in range(len(files) - 1, 0, -1):
-        newer_file = os.path.join(sitemap_path, files[i])
-        older_file = os.path.join(sitemap_path, files[i-1])
-        
-        # 读取文件内容
         try:
-            with open(newer_file, 'r') as f_newer:
-                newer_content = f_newer.read()
-            with open(older_file, 'r') as f_older:
-                older_content = f_older.read()
-                
-            # 比较内容
-            if newer_content == older_content:
+            new_urls = sorted(get_game_urls(files[i]))
+            old_urls = sorted(get_game_urls(files[i-1]))
+            deleted_urls = [url for url in new_urls if url not in old_urls]
+            added_urls = [url for url in old_urls if url not in new_urls]
+            if len(deleted_urls) == 0 and len(added_urls) == 0:
                 print(f"文件内容相同: {files[i-1]} 和 {files[i]}，删除较新的文件")
-                os.remove(newer_file)
+                os.remove(os.path.join(sitemap_path, files[i]))
                 deleted_count += 1
         except Exception as e:
             print(f"比较文件时出错: {e}")
@@ -84,7 +78,8 @@ def main():
         with open(f'{SITEMAP_PATH}/{target}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xml', 'w') as f:
             f.write(sitemap)
 
-        # 清理重复的sitemap文件
+    # 清理重复的sitemap文件
+    for target in TARGETS:
         deleted = clean_duplicate_sitemaps(target)
         if deleted > 0:
             print(f"清理了 {deleted} 个重复的sitemap文件")

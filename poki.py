@@ -1,11 +1,10 @@
-from lxml import html
 from bs4 import BeautifulSoup
 import requests
 import json
 import re
 import sqlite3
 from datetime import datetime
-from lib import find_latest_sitemap, SITEMAP_PATH
+from lib import find_latest_sitemap, SITEMAP_PATH, get_game_urls
 import time
 
 def create_database():
@@ -187,17 +186,7 @@ def main():
     print(f"最新sitemap: {latest_sitemap}")
 
     # 读取sitemap文件
-    with open(f"{SITEMAP_PATH}/poki_{latest_sitemap.strftime('%Y%m%d_%H%M%S')}.xml", "r") as f:
-        sitemap_content = f.read()
-
-    # 解析sitemap内容
-    soup = BeautifulSoup(sitemap_content, 'xml')
-
-    # 获取所有<loc>标签
-    loc_tags = soup.find_all('loc')
-
-    # 提取所有游戏URL
-    game_urls = [tag.text for tag in loc_tags]
+    game_urls = get_game_urls('poki', SITEMAP_PATH)
 
     while True:
         try:

@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-
+from bs4 import BeautifulSoup
 TARGETS = {
     'crazygames': 'https://www.crazygames.com/sitemap',
     'poki': 'https://poki.com/en/sitemaps/games.xml'
@@ -31,3 +31,13 @@ def find_latest_sitemap(site, sitemap_path=SITEMAP_PATH):
                 last_time = max(last_time, datetime.strptime(f"{date}_{time}", "%Y%m%d_%H%M%S"))
     
     return last_time 
+
+def get_game_urls(path, sitemap_path=SITEMAP_PATH):
+    """
+    获取指定站点的所有游戏URL
+    """
+    with open(f"{sitemap_path}/{path}", "r") as f:
+        sitemap_content = f.read()
+    soup = BeautifulSoup(sitemap_content, 'xml')
+    loc_tags = soup.find_all('loc')
+    return [tag.text for tag in loc_tags]
