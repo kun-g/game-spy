@@ -1,11 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "game-spy"
-version = "0.1.0"
-description = "Add your description here"
+version = "1.0.0"
+description = "游戏数据监控平台"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.7"
 dependencies = [
-    "beautifulsoup4>=4.13.4",
-    "lxml>=5.4.0",
-    "requests>=2.32.3",
+    "flask>=2.0.0",
+    "flask-cors>=3.0.0",
 ]

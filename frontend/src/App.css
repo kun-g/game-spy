@@ -1,0 +1,42 @@
+.App {
+  text-align: center;
+}
+
+.logo {
+  height: 32px;
+  margin: 16px;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.site-layout-content {
+  background: #fff;
+  padding: 24px;
+  min-height: 280px;
+}
+
+.ant-layout-header {
+  background: #001529;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-title {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.dashboard-card {
+  margin-bottom: 24px;
+}
+
+.platform-selector {
+  margin-bottom: 16px;
+} 

@@ -64,7 +64,7 @@ def clean_duplicate_sitemaps(site, sitemap_path=SITEMAP_PATH):
 def main():
     for target in TARGETS:
         # 获取最新的sitemap时间
-        last_time = find_latest_sitemap(target, SITEMAP_PATH)
+        _, last_time = find_latest_sitemap(target, SITEMAP_PATH)
         
         # 如果时间在1小时内，则不抓取
         if last_time and datetime.now() - last_time < timedelta(hours=1):

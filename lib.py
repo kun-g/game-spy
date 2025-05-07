@@ -20,17 +20,17 @@ def find_latest_sitemap(site, sitemap_path=SITEMAP_PATH):
         最新sitemap的时间对象，如果没有找到则返回None
     """
     files = os.listdir(sitemap_path)
-    last_time = None
+    last_time, last_file = None, None
     for file in files:
         if file.startswith(site):
             [_, date, time] = file.split('.')[0].split('_')
+            last_file = file
             # 最新时间
             if last_time is None:
                 last_time = datetime.strptime(f"{date}_{time}", "%Y%m%d_%H%M%S")
             else:
                 last_time = max(last_time, datetime.strptime(f"{date}_{time}", "%Y%m%d_%H%M%S"))
-    
-    return last_time 
+    return last_file, last_time
 
 def get_game_urls(path, sitemap_path=SITEMAP_PATH):
     """

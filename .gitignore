@@ -1,10 +1,48 @@
-# Python-generated files
+# Python
 __pycache__/
-*.py[oc]
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
 build/
+develop-eggs/
 dist/
-wheels/
-*.egg-info
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Virtual environments
-.venv
+# Virtual Environment
+venv/
+.env
+.venv/
+ENV/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnp/
+.pnp.js
+coverage/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project
+data/*.db-journal
