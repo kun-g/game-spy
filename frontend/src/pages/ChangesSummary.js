@@ -248,9 +248,6 @@ const ChangesSummary = () => {
             });
           });
           
-          // 按日期时间倒序排序
-          tableData.sort((a, b) => b.datetime.localeCompare(a.datetime));
-          
           setChangesData(tableData);
           setLoading(false);
         })
@@ -299,7 +296,7 @@ const ChangesSummary = () => {
       dataIndex: 'date',
       key: 'date',
       sorter: (a, b) => b.date.localeCompare(a.date),
-      defaultSortOrder: 'descend',
+      defaultSortOrder: 'ascend',
       sortDirections: ['descend', 'ascend'],
     },
     platform === 'all' ? {
