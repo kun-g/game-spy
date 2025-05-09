@@ -6,16 +6,43 @@ import {
   Alert, 
   Table, 
   Tag,
-  Space
+  Space,
+  Button,
+  Tooltip
 } from 'antd';
 import { 
   PlusCircleOutlined, 
-  MinusCircleOutlined
+  MinusCircleOutlined,
+  LineChartOutlined
 } from '@ant-design/icons';
 import api from '../services/api';
 
 const { Title } = Typography;
 const { Option } = Select;
+
+// Google Trends 地区选项
+const geoOptions = [
+  { value: 'WORLD', label: '全球' },
+  { value: 'US', label: '美国' },
+  { value: 'GB', label: '英国' },
+  { value: 'JP', label: '日本' },
+  { value: 'CN', label: '中国' },
+  { value: 'DE', label: '德国' },
+  { value: 'FR', label: '法国' },
+  { value: 'IN', label: '印度' },
+  { value: 'KR', label: '韩国' },
+];
+
+// Google Trends 时间范围选项
+const dateRangeOptions = [
+  { label: '近1天', value: 'now 1-d' },
+  { label: '近7天', value: 'now 7-d' },
+  { label: '近1个月', value: 'now 1-m' },
+  { label: '近3个月', value: 'now 3-m' },
+  { label: '近1年', value: 'now 12-m' },
+  { label: '近5年', value: 'now 5-y' },
+  { label: '全部时间', value: 'all' },
+];
 
 const ChangesSummary = () => {
   const [platform, setPlatform] = useState('all');
@@ -24,6 +51,10 @@ const ChangesSummary = () => {
   const [platforms, setPlatforms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Google Trends 配置
+  const [trendGeo, setTrendGeo] = useState('US');
+  const [trendDateRange, setTrendDateRange] = useState('now 3-m');
 
   // 获取平台列表
   useEffect(() => {
@@ -58,7 +89,8 @@ const ChangesSummary = () => {
                 time: entry.time,
                 datetime: entry.datetime,
                 platform: entry.platform,
-                name: getNameFromUrl(url),
+                name: formatGameName(getNameFromUrl(url)),
+                originalName: getNameFromUrl(url),
                 url: url,
                 type: url.includes('/game/') ? 'game' : 'other',
                 action: 'added',
@@ -74,7 +106,8 @@ const ChangesSummary = () => {
                 time: entry.time,
                 datetime: entry.datetime,
                 platform: entry.platform,
-                name: getNameFromUrl(url),
+                name: formatGameName(getNameFromUrl(url)),
+                originalName: getNameFromUrl(url),
                 url: url,
                 type: url.includes('/game/') ? 'game' : 'other',
                 action: 'deleted',
@@ -126,14 +159,16 @@ const ChangesSummary = () => {
           
           // 处理添加的游戏URL
           summaryData.game_urls_added.forEach(item => {
-            const url = `https://www.${platform}.com/game/${item.name}`;
+            const gameName = item.name;
+            const url = `https://www.${platform}.com/game/${gameName}`;
             tableData.push({
-              key: `added-game-${item.name}`,
+              key: `added-game-${gameName}`,
               date: urlDateMap.get(url) || '未知',
               time: urlTimeMap.get(url) || '未知',
               datetime: urlDatetimeMap.get(url) || '未知',
               platform: platform,
-              name: item.name,
+              name: formatGameName(gameName),
+              originalName: gameName,
               url: url,
               type: 'game',
               action: 'added',
@@ -143,14 +178,16 @@ const ChangesSummary = () => {
           
           // 处理删除的游戏URL
           summaryData.game_urls_deleted.forEach(item => {
-            const url = `https://www.${platform}.com/game/${item.name}`;
+            const gameName = item.name;
+            const url = `https://www.${platform}.com/game/${gameName}`;
             tableData.push({
-              key: `deleted-game-${item.name}`,
+              key: `deleted-game-${gameName}`,
               date: urlDateMap.get(url) || '未知',
               time: urlTimeMap.get(url) || '未知',
               datetime: urlDatetimeMap.get(url) || '未知',
               platform: platform,
-              name: item.name,
+              name: formatGameName(gameName),
+              originalName: gameName,
               url: url,
               type: 'game',
               action: 'deleted',
@@ -166,7 +203,8 @@ const ChangesSummary = () => {
               time: urlTimeMap.get(item.url) || '未知',
               datetime: urlDatetimeMap.get(item.url) || '未知',
               platform: platform,
-              name: getNameFromUrl(item.url),
+              name: formatGameName(getNameFromUrl(item.url)),
+              originalName: getNameFromUrl(item.url),
               url: item.url,
               type: 'other',
               action: 'added',
@@ -182,7 +220,8 @@ const ChangesSummary = () => {
               time: urlTimeMap.get(item.url) || '未知',
               datetime: urlDatetimeMap.get(item.url) || '未知',
               platform: platform,
-              name: getNameFromUrl(item.url),
+              name: formatGameName(getNameFromUrl(item.url)),
+              originalName: getNameFromUrl(item.url),
               url: item.url,
               type: 'other',
               action: 'deleted',
@@ -210,6 +249,30 @@ const ChangesSummary = () => {
     return parts[parts.length - 1] || url;
   };
 
+  // 格式化游戏名称，将短横线转换为空格并美化显示
+  const formatGameName = (name) => {
+    if (!name) return '';
+    return name.replace(/-/g, ' ').split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
+  // 生成Google Trends URL
+  const getGoogleTrendsUrl = (keyword) => {
+    // 替换空格为加号以优化搜索
+    const formattedKeyword = keyword.replace(/ /g, '+');
+    
+    // 构建基本URL
+    let url = `https://trends.google.com/trends/explore?date=${trendDateRange}&q=${formattedKeyword}&hl=zh-CN`;
+    
+    // 如果不是全球，添加地区参数
+    if (trendGeo !== 'WORLD') {
+      url += `&geo=${trendGeo}`;
+    }
+    
+    return url;
+  };
+
   // 表格列定义
   const columns = [
     {
@@ -232,22 +295,21 @@ const ChangesSummary = () => {
       dataIndex: 'name',
       key: 'name',
       render: (text, record) => (
-        <a href={record.url} target="_blank" rel="noopener noreferrer">
-          {text}
-        </a>
+        <Space>
+          <a href={record.url} target="_blank" rel="noopener noreferrer">
+            {text}
+          </a>
+          <Tooltip title="查看Google趋势">
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<LineChartOutlined />} 
+              onClick={() => window.open(getGoogleTrendsUrl(record.name), '_blank')}
+            />
+          </Tooltip>
+        </Space>
       ),
       sorter: (a, b) => a.name.localeCompare(b.name),
-    },
-    {
-      title: '链接',
-      dataIndex: 'url',
-      key: 'url',
-      render: url => (
-        <a href={url} target="_blank" rel="noopener noreferrer">
-          {url}
-        </a>
-      ),
-      responsive: ['lg'],
     },
     {
       title: '类型',
@@ -307,6 +369,16 @@ const ChangesSummary = () => {
     setPlatform(value);
   };
 
+  // 处理Google Trends地区变化
+  const handleGeoChange = (value) => {
+    setTrendGeo(value);
+  };
+
+  // 处理Google Trends时间范围变化
+  const handleDateRangeChange = (value) => {
+    setTrendDateRange(value);
+  };
+
   if (error) {
     return <Alert type="error" message={error} />;
   }
@@ -318,7 +390,7 @@ const ChangesSummary = () => {
           <Title level={4}>变更汇总</Title>
           <div>
             <Select
-              style={{ width: 150, marginRight: 16 }}
+              style={{ width: 120, marginRight: 8 }}
               placeholder="选择平台"
               value={platform}
               onChange={handlePlatformChange}
@@ -328,7 +400,7 @@ const ChangesSummary = () => {
               ))}
             </Select>
             <Select
-              style={{ width: 150 }}
+              style={{ width: 120, marginRight: 8 }}
               placeholder="过滤时间范围"
               defaultValue="all"
               onChange={handleDaysChange}
@@ -339,11 +411,35 @@ const ChangesSummary = () => {
               <Option value="30">最近30天</Option>
               <Option value="90">最近90天</Option>
             </Select>
+            <Tooltip title="查看Google趋势的地区">
+              <Select
+                style={{ width: 100, marginRight: 8 }}
+                placeholder="地区"
+                value={trendGeo}
+                onChange={handleGeoChange}
+              >
+                {geoOptions.map(option => (
+                  <Option key={option.value} value={option.value}>{option.label}</Option>
+                ))}
+              </Select>
+            </Tooltip>
+            <Tooltip title="查看Google趋势的时间范围">
+              <Select
+                style={{ width: 120 }}
+                placeholder="趋势时间范围"
+                value={trendDateRange}
+                onChange={handleDateRangeChange}
+              >
+                {dateRangeOptions.map(option => (
+                  <Option key={option.value} value={option.value}>{option.label}</Option>
+                ))}
+              </Select>
+            </Tooltip>
           </div>
         </div>
       }>
         <Table 
-          dataSource={changesData.sort((a, b) => b.date.localeCompare(a.date))} 
+          dataSource={changesData} 
           columns={columns} 
           loading={loading}
           pagination={{ pageSize: 20 }}
