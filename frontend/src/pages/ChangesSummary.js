@@ -8,7 +8,8 @@ import {
   Tag,
   Space,
   Button,
-  Tooltip
+  Tooltip,
+  Switch
 } from 'antd';
 import { 
   PlusCircleOutlined, 
@@ -33,16 +34,19 @@ const geoOptions = [
   { value: 'KR', label: '韩国' },
 ];
 
-// Google Trends 时间范围选项
-const dateRangeOptions = [
-  { label: '近1天', value: 'now 1-d' },
-  { label: '近7天', value: 'now 7-d' },
-  { label: '近1个月', value: 'now 1-m' },
-  { label: '近3个月', value: 'now 3-m' },
-  { label: '近1年', value: 'now 12-m' },
-  { label: '近5年', value: 'now 5-y' },
-  { label: '全部时间', value: 'all' },
-];
+// 构建日期范围选项的函数
+const buildDateRangeOptions = (useNow = true) => {
+  const prefix = useNow ? 'now' : 'today';
+  return [
+    { label: '近1天', value: `${prefix} 1-d` },
+    { label: '近7天', value: `${prefix} 7-d` },
+    { label: '近1个月', value: `${prefix} 1-m` },
+    { label: '近3个月', value: `${prefix} 3-m` },
+    { label: '近1年', value: `${prefix} 12-m` },
+    { label: '近5年', value: `${prefix} 5-y` },
+    { label: '全部时间', value: 'all' },
+  ];
+};
 
 const ChangesSummary = () => {
   const [platform, setPlatform] = useState('all');
@@ -54,7 +58,22 @@ const ChangesSummary = () => {
   
   // Google Trends 配置
   const [trendGeo, setTrendGeo] = useState('US');
+  const [useNowFormat, setUseNowFormat] = useState(true);
+  const [dateRangeOptions, setDateRangeOptions] = useState(buildDateRangeOptions(true));
   const [trendDateRange, setTrendDateRange] = useState('now 3-m');
+
+  // 切换时间格式时更新选项和当前值
+  useEffect(() => {
+    const newOptions = buildDateRangeOptions(useNowFormat);
+    setDateRangeOptions(newOptions);
+    
+    // 更新当前选中的值，保持相同的时间范围但更改前缀
+    if (trendDateRange !== 'all') {
+      const [_, period] = trendDateRange.split(' ');
+      const newPrefix = useNowFormat ? 'now' : 'today';
+      setTrendDateRange(period ? `${newPrefix} ${period}` : 'all');
+    }
+  }, [useNowFormat, trendDateRange]);
 
   // 获取平台列表
   useEffect(() => {
@@ -379,6 +398,11 @@ const ChangesSummary = () => {
     setTrendDateRange(value);
   };
 
+  // 处理时间格式切换
+  const handleFormatToggle = (checked) => {
+    setUseNowFormat(checked);
+  };
+
   if (error) {
     return <Alert type="error" message={error} />;
   }
@@ -425,7 +449,7 @@ const ChangesSummary = () => {
             </Tooltip>
             <Tooltip title="查看Google趋势的时间范围">
               <Select
-                style={{ width: 120 }}
+                style={{ width: 120, marginRight: 8 }}
                 placeholder="趋势时间范围"
                 value={trendDateRange}
                 onChange={handleDateRangeChange}
@@ -434,6 +458,15 @@ const ChangesSummary = () => {
                   <Option key={option.value} value={option.value}>{option.label}</Option>
                 ))}
               </Select>
+            </Tooltip>
+            <Tooltip title="切换时间格式: now/today">
+              <Switch
+                checkedChildren="now"
+                unCheckedChildren="today"
+                checked={useNowFormat}
+                onChange={handleFormatToggle}
+                style={{ marginRight: 8 }}
+              />
             </Tooltip>
           </div>
         </div>
