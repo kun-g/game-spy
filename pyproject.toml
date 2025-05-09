@@ -9,6 +9,12 @@ description = "游戏数据监控平台"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [
+    "beautifulsoup4>=4.13.4",
     "flask>=2.0.0",
     "flask-cors>=3.0.0",
+    "lxml>=5.4.0",
+    "requests>=2.31.0",
 ]
+
+[tool.setuptools]
+packages = ["backend"]
