@@ -2,10 +2,14 @@ import requests
 import os
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from backend.lib import find_latest_sitemap, TARGETS, SITEMAP_PATH, get_game_urls
+from backend.lib.data import load_config
+from backend.lib.sitemap import find_latest_sitemap, get_game_urls
 
-def fetch_sitemap(target):
-    res = requests.get(TARGETS[target])
+config = load_config()
+SITEMAP_PATH = config['sitemap_path']
+
+def fetch_sitemap(url):
+    res = requests.get(url)
     res.raise_for_status()
     return res.text
 
@@ -14,7 +18,7 @@ def parse_urls(sitemap_xml):
     urls = [loc.text.strip() for loc in soup.find_all('loc')]
     return urls
 
-def clean_duplicate_sitemaps(site, sitemap_path=SITEMAP_PATH):
+def clean_duplicate_sitemaps(site, sitemap_path):
     """
     对比相邻日期的sitemap文件，如果内容相同则删除最新的文件
     
@@ -48,8 +52,8 @@ def clean_duplicate_sitemaps(site, sitemap_path=SITEMAP_PATH):
     # 对比相邻的文件
     for i in range(len(files) - 1, 0, -1):
         try:
-            new_urls = sorted(get_game_urls(files[i]))
-            old_urls = sorted(get_game_urls(files[i-1]))
+            new_urls = sorted(get_game_urls(os.path.join(sitemap_path, files[i])))
+            old_urls = sorted(get_game_urls(os.path.join(sitemap_path, files[i-1])))
             deleted_urls = [url for url in new_urls if url not in old_urls]
             added_urls = [url for url in old_urls if url not in new_urls]
             if len(deleted_urls) == 0 and len(added_urls) == 0:
@@ -62,28 +66,28 @@ def clean_duplicate_sitemaps(site, sitemap_path=SITEMAP_PATH):
     return deleted_count
 
 def main():
-    for target in TARGETS:
+    for target in config['sites']:
+        name, url = target['name'], target['url']
         # 获取最新的sitemap时间
-        _, last_time = find_latest_sitemap(target, SITEMAP_PATH)
+        _, last_time = find_latest_sitemap(name, config['sitemap_path'])
         
         # 如果时间在1小时内，则不抓取
         if last_time and datetime.now() - last_time < timedelta(hours=1):
-            print(f"Last fetch time for {target} is less than 1 hour, skipping...")
+            print(f"Last fetch time for {name} is less than 1 hour, skipping...")
             continue
 
-        print(f"Fetching sitemap for {target}...")
-        sitemap = fetch_sitemap(target)
+        print(f"Fetching sitemap for {name}...")
+        sitemap = fetch_sitemap(url)
 
         # 保存到文件
-        with open(f'{SITEMAP_PATH}/{target}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xml', 'w') as f:
+        with open(f'{SITEMAP_PATH}/{name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xml', 'w') as f:
             f.write(sitemap)
 
     # 清理重复的sitemap文件
-    for target in TARGETS:
-        deleted = clean_duplicate_sitemaps(target)
+    for target in config['sites']:
+        deleted = clean_duplicate_sitemaps(target['name'], config['sitemap_path'])
         if deleted > 0:
             print(f"清理了 {deleted} 个重复的sitemap文件")
-        
 
 if __name__ == '__main__':
     main()

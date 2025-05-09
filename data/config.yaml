@@ -1,0 +1,8 @@
+sites:
+  - name: poki
+    url: https://www.poki.com/sitemap.xml
+  - name: crazygames
+    url: https://www.crazygames.com/sitemap.xml
+    
+
+sitemap_path: data/sitemaps
