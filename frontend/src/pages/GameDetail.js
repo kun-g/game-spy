@@ -42,7 +42,7 @@ function GameDetail() {
     if (gameId) {
       loadGameDetail();
     }
-  }, [gameId]);
+  }, [gameId, loadGameDetail]);
 
   const loadGameDetail = async () => {
     setLoading(true);

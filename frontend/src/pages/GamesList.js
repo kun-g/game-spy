@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Card, Select, Tag, Input, Button, Space, Typography } from 'antd';
 import { SearchOutlined, LikeOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
@@ -30,7 +30,7 @@ function GamesList() {
       loadGames();
       loadCategories();
     }
-  }, [selectedPlatform, pagination.current, pagination.pageSize, selectedCategory]);
+  }, [selectedPlatform, selectedCategory, pagination.current, pagination.pageSize, loadGames, loadCategories]);
 
   const loadPlatforms = async () => {
     try {
@@ -44,11 +44,14 @@ function GamesList() {
     }
   };
 
-  const loadGames = async () => {
+  const loadGames = useCallback(async () => {
     setLoading(true);
     try {
-      const offset = (pagination.current - 1) * pagination.pageSize;
-      const response = await api.getGames(selectedPlatform, pagination.pageSize, offset);
+      const response = await api.getGames(
+        selectedPlatform,
+        pagination.pageSize,
+        (pagination.current - 1) * pagination.pageSize
+      );
       let gamesData = response.data;
       
       // 如果有分类筛选
@@ -73,20 +76,19 @@ function GamesList() {
         total: gamesData.length > pagination.pageSize ? gamesData.length : pagination.pageSize * 10, // 估算总数
       }));
     } catch (error) {
-      console.error('加载游戏列表失败', error);
-    } finally {
+      console.error("获取游戏列表失败", error);
       setLoading(false);
     }
-  };
+  }, [selectedPlatform, pagination.pageSize, pagination.current, selectedCategory, searchText]);
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const response = await api.getCategories(selectedPlatform);
       setCategories(response.data);
     } catch (error) {
-      console.error('加载分类列表失败', error);
+      console.error("获取分类失败", error);
     }
-  };
+  }, [selectedPlatform]);
 
   const handlePlatformChange = (value) => {
     setSelectedPlatform(value);

@@ -41,12 +41,10 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (selectedPlatform) {
-      loadStats();
-      loadTrendData();
-      loadTopGames();
-    }
-  }, [selectedPlatform]);
+    loadTopGames();
+    loadTrendData();
+    loadStats();
+  }, [platform, loadTopGames, loadTrendData, loadStats]);
 
   const loadPlatforms = async () => {
     try {

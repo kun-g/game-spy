@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Card, Select, Typography, Tag, Badge, Spin } from 'antd';
 import { Link } from 'react-router-dom';
 import { LikeOutlined, DislikeOutlined, TrophyOutlined } from '@ant-design/icons';
@@ -18,12 +18,6 @@ function Rankings() {
     loadPlatforms();
   }, []);
 
-  useEffect(() => {
-    if (selectedPlatform) {
-      loadRankings();
-    }
-  }, [selectedPlatform, limitSize]);
-
   const loadPlatforms = async () => {
     try {
       const response = await api.getPlatforms();
@@ -36,17 +30,23 @@ function Rankings() {
     }
   };
 
-  const loadRankings = async () => {
+  const loadRankings = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.getRankings(selectedPlatform, limitSize);
       setRankings(response.data);
+      setLoading(false);
     } catch (error) {
-      console.error('加载排行榜失败', error);
-    } finally {
+      console.error("获取排行榜数据失败", error);
       setLoading(false);
     }
-  };
+  }, [selectedPlatform, limitSize]);
+
+  useEffect(() => {
+    if (selectedPlatform) {
+      loadRankings();
+    }
+  }, [selectedPlatform, limitSize, loadRankings]);
 
   const handlePlatformChange = (value) => {
     setSelectedPlatform(value);

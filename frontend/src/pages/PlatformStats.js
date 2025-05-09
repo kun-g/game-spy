@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Row, Col, Typography, Table, Select, Spin, Statistic, Divider, Progress } from 'antd';
 import { 
   PlaySquareOutlined, 
@@ -62,7 +62,7 @@ function PlatformStats() {
     }
   };
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.getStats(selectedPlatform, timeRange);
@@ -72,16 +72,23 @@ function PlatformStats() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPlatform, timeRange]);
 
-  const loadTrendData = async () => {
+  const loadTrendData = useCallback(async () => {
     try {
       const response = await api.getGamesTrend(selectedPlatform, timeRange);
       setTrendData(response.data);
     } catch (error) {
       console.error('加载趋势数据失败', error);
     }
-  };
+  }, [selectedPlatform, timeRange]);
+
+  useEffect(() => {
+    if (selectedPlatform) {
+      loadStats();
+      loadTrendData();
+    }
+  }, [selectedPlatform, timeRange, loadStats, loadTrendData]);
 
   // 准备分类数量图表数据
   const getCategoryData = () => {
