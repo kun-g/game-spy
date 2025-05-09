@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Row, Col, Card, Statistic, Select, Table, Spin, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
@@ -40,11 +40,43 @@ function Dashboard() {
     loadPlatforms();
   }, []);
 
+  const loadStats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await api.getStats(selectedPlatform, 30);
+      setStats(response.data);
+    } catch (error) {
+      console.error('加载统计数据失败', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedPlatform]);
+
+  const loadTrendData = useCallback(async () => {
+    try {
+      const response = await api.getGamesTrend(selectedPlatform, 30);
+      setTrendData(response.data);
+    } catch (error) {
+      console.error('加载趋势数据失败', error);
+    }
+  }, [selectedPlatform]);
+
+  const loadTopGames = useCallback(async () => {
+    try {
+      const response = await api.getRankings(selectedPlatform, 5);
+      setTopGames(response.data);
+    } catch (error) {
+      console.error('加载热门游戏失败', error);
+    }
+  }, [selectedPlatform]);
+
   useEffect(() => {
-    loadTopGames();
-    loadTrendData();
-    loadStats();
-  }, [platform, loadTopGames, loadTrendData, loadStats]);
+    if (selectedPlatform) {
+      loadTopGames();
+      loadTrendData();
+      loadStats();
+    }
+  }, [selectedPlatform, loadTopGames, loadTrendData, loadStats]);
 
   const loadPlatforms = async () => {
     try {
@@ -55,36 +87,6 @@ function Dashboard() {
       }
     } catch (error) {
       console.error('加载平台列表失败', error);
-    }
-  };
-
-  const loadStats = async () => {
-    setLoading(true);
-    try {
-      const response = await api.getStats(selectedPlatform, 30);
-      setStats(response.data);
-    } catch (error) {
-      console.error('加载统计数据失败', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadTrendData = async () => {
-    try {
-      const response = await api.getGamesTrend(selectedPlatform, 30);
-      setTrendData(response.data);
-    } catch (error) {
-      console.error('加载趋势数据失败', error);
-    }
-  };
-
-  const loadTopGames = async () => {
-    try {
-      const response = await api.getRankings(selectedPlatform, 5);
-      setTopGames(response.data);
-    } catch (error) {
-      console.error('加载热门游戏失败', error);
     }
   };
 
