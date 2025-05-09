@@ -24,12 +24,14 @@
 - **Root Directory**: 保持默认值 (项目根目录)
 - **Build Command**: 
   ```
-  cd frontend && npm install && npm run build
+  cd frontend && CI=false npm install && CI=false npm run build
   ```
 - **Output Directory**: 
   ```
   frontend/build
   ```
+
+> **注意**: 使用 `CI=false` 是为了防止 ESLint 警告导致构建失败。
 
 ### 3. 环境变量
 
@@ -38,6 +40,7 @@
 - `API_CONFIG__HOST`: `0.0.0.0`
 - `API_CONFIG__PORT`: `8000`
 - `API_CONFIG__DEBUG`: `False`
+- `CI`: `false` (防止 ESLint 警告被视为错误)
 
 ### 4. 部署
 
@@ -53,6 +56,27 @@
 ## 故障排除
 
 如果您遇到问题，可以检查以下几点：
+
+### ESLint 警告导致构建失败
+
+如果构建失败并出现 ESLint 警告，确保以下设置之一已完成：
+
+1. 在构建命令前添加 `CI=false`：
+   ```
+   CI=false npm run build
+   ```
+
+2. 或在 Vercel 项目设置中添加环境变量：
+   ```
+   CI=false
+   ```
+
+3. 或在 `vercel.json` 文件中的 `env` 部分添加：
+   ```json
+   "env": {
+     "CI": "false"
+   }
+   ```
 
 ### API 不可访问
 
