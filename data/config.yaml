@@ -5,6 +5,17 @@ sites:
     url: https://www.crazygames.com/sitemap
   - name: lagged
     url: https://lagged.com/sitemap.xml
+  - name: miniclip
+    url: https://www.miniclip.com/sitemap.xml
+  - name: gamedistribution
+    url: https://gamedistribution.com/sitemap-games-1.xml
+  - name: onlinegames
+    url: https://www.onlinegames.io/sitemap.xml
+
+
+pending:
+  - name: kongregate
+    url: https://www.kongregate.com/sitemap.xml
     
 
 sitemap_path: data/sitemaps

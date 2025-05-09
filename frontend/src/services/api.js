@@ -57,6 +57,13 @@ const api = {
       params.days = days;
     }
     return axios.get(`${API_URL}/changes/summary`, { params });
+  },
+  
+  // 获取原始变更数据（含URL和确切日期）
+  getRawChanges: (platform = 'crazygames') => {
+    return axios.get(`${API_URL}/changes/raw`, {
+      params: { platform }
+    });
   }
 };
 

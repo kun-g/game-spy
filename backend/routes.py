@@ -116,6 +116,66 @@ def get_changes_summary():
         
     return jsonify(summary)
 
+@api_bp.route('/changes/raw', methods=['GET'])
+def get_raw_changes():
+    """获取平台变更原始数据（含URL和对应日期）"""
+    import json
+    import os
+    from pathlib import Path
+    from datetime import datetime
+    
+    platform = request.args.get('platform', PLATFORMS[0])
+    days = request.args.get('days')
+    
+    if platform not in PLATFORMS and platform != 'all':
+        return jsonify({"error": f"不支持的平台: {platform}"}), 400
+    
+    # 项目根目录
+    root_dir = Path(__file__).parent.parent.absolute()
+    
+    # 获取所有需要处理的平台
+    target_platforms = PLATFORMS if platform == 'all' else [platform]
+    
+    # 结果集
+    result = []
+    
+    # 处理每个平台的日志
+    for p in target_platforms:
+        changelog_path = os.path.join(root_dir, 'data', 'change_log', f'{p}.jsonl')
+        
+        if not os.path.exists(changelog_path):
+            continue  # 跳过不存在的日志文件
+        
+        try:
+            with open(changelog_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    entry = json.loads(line.strip())
+                    
+                    # 解析日期时间为ISO格式
+                    dt = entry['datetime']
+                    date_str = f"{dt[0:4]}-{dt[4:6]}-{dt[6:8]}"
+                    time_str = f"{dt[9:11]}:{dt[11:13]}:{dt[13:15]}"
+                    datetime_str = f"{date_str} {time_str}"
+                    
+                    # 存储处理后的记录
+                    record = {
+                        'platform': p,
+                        'date': date_str,
+                        'time': time_str,
+                        'datetime': datetime_str,
+                        'added_urls': entry.get('added_urls', []),
+                        'deleted_urls': entry.get('deleted_urls', [])
+                    }
+                    result.append(record)
+        except Exception as e:
+            # 记录错误但继续处理其他平台
+            print(f"处理平台 {p} 日志时出错: {str(e)}")
+    
+    # 按日期时间倒序排序
+    result.sort(key=lambda x: x['datetime'], reverse=True)
+    
+    return jsonify(result)
+
 # 自定义错误处理
 @api_bp.errorhandler(404)
 def not_found(error):

@@ -7,7 +7,8 @@ import {
   Alert, 
   Table, 
   Tag,
-  Space
+  Space,
+  Tooltip
 } from 'antd';
 import { 
   PlusCircleOutlined, 
@@ -19,7 +20,7 @@ const { Title } = Typography;
 const { Option } = Select;
 
 const ChangesSummary = () => {
-  const [platform, setPlatform] = useState('crazygames');
+  const [platform, setPlatform] = useState('all');
   const [daysFilter, setDaysFilter] = useState(null);
   const [changesData, setChangesData] = useState([]);
   const [platforms, setPlatforms] = useState([]);
@@ -30,7 +31,7 @@ const ChangesSummary = () => {
   useEffect(() => {
     api.getPlatforms()
       .then(response => {
-        setPlatforms(response.data);
+        setPlatforms(['all', ...response.data]);
       })
       .catch(err => {
         console.error('获取平台列表失败', err);
@@ -41,71 +42,168 @@ const ChangesSummary = () => {
   // 获取变更汇总数据并处理为表格数据
   useEffect(() => {
     setLoading(true);
-    api.getChangesSummary(platform, daysFilter)
-      .then(response => {
-        const data = response.data;
-        const tableData = [];
-        
-        // 处理添加的游戏URL
-        data.game_urls_added.forEach(item => {
-          tableData.push({
-            key: `added-game-${item.name}`,
-            date: getDateForUrl(data.changes_by_date, item.name, true),
-            name: item.name,
-            url: `https://www.${platform}.com/game/${item.name}`,
-            type: 'game',
-            action: 'added',
-            count: item.count
+    
+    // 如果选择了"全部"平台，只获取原始数据
+    if (platform === 'all') {
+      api.getRawChanges(platform)
+        .then(response => {
+          const rawData = response.data;
+          const tableData = [];
+          
+          // 处理每个原始记录
+          rawData.forEach(entry => {
+            // 处理添加的URL
+            entry.added_urls.forEach(url => {
+              tableData.push({
+                key: `added-${entry.platform}-${url}`,
+                date: entry.date,
+                time: entry.time,
+                datetime: entry.datetime,
+                platform: entry.platform,
+                name: getNameFromUrl(url),
+                url: url,
+                type: url.includes('/game/') ? 'game' : 'other',
+                action: 'added',
+                count: 1
+              });
+            });
+            
+            // 处理删除的URL
+            entry.deleted_urls.forEach(url => {
+              tableData.push({
+                key: `deleted-${entry.platform}-${url}`,
+                date: entry.date,
+                time: entry.time,
+                datetime: entry.datetime,
+                platform: entry.platform,
+                name: getNameFromUrl(url),
+                url: url,
+                type: url.includes('/game/') ? 'game' : 'other',
+                action: 'deleted',
+                count: 1
+              });
+            });
           });
+          
+          setChangesData(tableData);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('获取数据失败', err);
+          setError('获取数据失败');
+          setLoading(false);
         });
-        
-        // 处理删除的游戏URL
-        data.game_urls_deleted.forEach(item => {
-          tableData.push({
-            key: `deleted-game-${item.name}`,
-            date: getDateForUrl(data.changes_by_date, item.name, false),
-            name: item.name,
-            url: `https://www.${platform}.com/game/${item.name}`,
-            type: 'game',
-            action: 'deleted',
-            count: item.count
+    } else {
+      // 选择了特定平台，获取汇总数据和原始数据
+      Promise.all([
+        api.getChangesSummary(platform, daysFilter),
+        api.getRawChanges(platform)
+      ])
+        .then(([summaryResponse, rawResponse]) => {
+          const summaryData = summaryResponse.data;
+          const rawData = rawResponse.data;
+          
+          // 创建URL到日期时间的映射
+          const urlDateMap = new Map();
+          const urlTimeMap = new Map();
+          const urlDatetimeMap = new Map();
+          
+          rawData.forEach(entry => {
+            // 记录添加的URL
+            entry.added_urls.forEach(url => {
+              urlDateMap.set(url, entry.date);
+              urlTimeMap.set(url, entry.time);
+              urlDatetimeMap.set(url, entry.datetime);
+            });
+            
+            // 记录删除的URL
+            entry.deleted_urls.forEach(url => {
+              urlDateMap.set(url, entry.date);
+              urlTimeMap.set(url, entry.time);
+              urlDatetimeMap.set(url, entry.datetime);
+            });
           });
-        });
-        
-        // 处理添加的其他URL
-        data.other_urls_added.forEach(item => {
-          tableData.push({
-            key: `added-other-${item.url}`,
-            date: getDateForUrl(data.changes_by_date, item.url, true),
-            name: getNameFromUrl(item.url),
-            url: item.url,
-            type: 'other',
-            action: 'added',
-            count: item.count
+          
+          const tableData = [];
+          
+          // 处理添加的游戏URL
+          summaryData.game_urls_added.forEach(item => {
+            const url = `https://www.${platform}.com/game/${item.name}`;
+            tableData.push({
+              key: `added-game-${item.name}`,
+              date: urlDateMap.get(url) || '未知',
+              time: urlTimeMap.get(url) || '未知',
+              datetime: urlDatetimeMap.get(url) || '未知',
+              platform: platform,
+              name: item.name,
+              url: url,
+              type: 'game',
+              action: 'added',
+              count: item.count
+            });
           });
-        });
-        
-        // 处理删除的其他URL
-        data.other_urls_deleted.forEach(item => {
-          tableData.push({
-            key: `deleted-other-${item.url}`,
-            date: getDateForUrl(data.changes_by_date, item.url, false),
-            name: getNameFromUrl(item.url),
-            url: item.url,
-            type: 'other',
-            action: 'deleted',
-            count: item.count
+          
+          // 处理删除的游戏URL
+          summaryData.game_urls_deleted.forEach(item => {
+            const url = `https://www.${platform}.com/game/${item.name}`;
+            tableData.push({
+              key: `deleted-game-${item.name}`,
+              date: urlDateMap.get(url) || '未知',
+              time: urlTimeMap.get(url) || '未知',
+              datetime: urlDatetimeMap.get(url) || '未知',
+              platform: platform,
+              name: item.name,
+              url: url,
+              type: 'game',
+              action: 'deleted',
+              count: item.count
+            });
           });
+          
+          // 处理添加的其他URL
+          summaryData.other_urls_added.forEach(item => {
+            tableData.push({
+              key: `added-other-${item.url}`,
+              date: urlDateMap.get(item.url) || '未知',
+              time: urlTimeMap.get(item.url) || '未知',
+              datetime: urlDatetimeMap.get(item.url) || '未知',
+              platform: platform,
+              name: getNameFromUrl(item.url),
+              url: item.url,
+              type: 'other',
+              action: 'added',
+              count: item.count
+            });
+          });
+          
+          // 处理删除的其他URL
+          summaryData.other_urls_deleted.forEach(item => {
+            tableData.push({
+              key: `deleted-other-${item.url}`,
+              date: urlDateMap.get(item.url) || '未知',
+              time: urlTimeMap.get(item.url) || '未知',
+              datetime: urlDatetimeMap.get(item.url) || '未知',
+              platform: platform,
+              name: getNameFromUrl(item.url),
+              url: item.url,
+              type: 'other',
+              action: 'deleted',
+              count: item.count
+            });
+          });
+          
+          // 按日期时间倒序排序
+          tableData.sort((a, b) => b.datetime.localeCompare(a.datetime));
+          
+          setChangesData(tableData);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('获取数据失败', err);
+          setError('获取数据失败');
+          setLoading(false);
         });
-        
-        setChangesData(tableData);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('获取变更汇总数据失败', err);
-        setError('获取变更汇总数据失败');
-        setLoading(false);
-      });
+    }
   }, [platform, daysFilter]);
 
   // 从URL提取名称
@@ -114,24 +212,23 @@ const ChangesSummary = () => {
     return parts[parts.length - 1] || url;
   };
 
-  // 获取URL对应的日期（简化处理，实际上需要在原始数据中查找）
-  const getDateForUrl = (dateData, urlName, isAdded) => {
-    // 这里简化处理，实际应用中可能需要更复杂的逻辑来确定具体日期
-    // 由于在当前数据结构中无法直接获取具体URL的修改日期，返回最近的日期作为默认值
-    if (dateData && dateData.length > 0) {
-      return dateData[dateData.length - 1].date;
-    }
-    return '';
-  };
-
   // 表格列定义
   const columns = [
     {
       title: '日期',
       dataIndex: 'date',
       key: 'date',
-      sorter: (a, b) => a.date.localeCompare(b.date),
+      sorter: (a, b) => b.date.localeCompare(a.date),
+      defaultSortOrder: 'descend',
+      sortDirections: ['descend', 'ascend'],
     },
+    platform === 'all' ? {
+      title: '平台',
+      dataIndex: 'platform',
+      key: 'platform',
+      filters: platforms.filter(p => p !== 'all').map(p => ({ text: p, value: p })),
+      onFilter: (value, record) => record.platform === value,
+    } : null,
     {
       title: '名称',
       dataIndex: 'name',
@@ -200,7 +297,7 @@ const ChangesSummary = () => {
       key: 'count',
       sorter: (a, b) => a.count - b.count,
     }
-  ];
+  ].filter(Boolean);
 
   // 处理天数筛选变化
   const handleDaysChange = (value) => {
@@ -229,7 +326,7 @@ const ChangesSummary = () => {
               onChange={handlePlatformChange}
             >
               {platforms.map(p => (
-                <Option key={p} value={p}>{p}</Option>
+                <Option key={p} value={p}>{p === 'all' ? '全部' : p}</Option>
               ))}
             </Select>
             <Select
@@ -237,6 +334,7 @@ const ChangesSummary = () => {
               placeholder="过滤时间范围"
               defaultValue="all"
               onChange={handleDaysChange}
+              disabled={platform === 'all'}
             >
               <Option value="all">全部</Option>
               <Option value="7">最近7天</Option>
@@ -247,7 +345,7 @@ const ChangesSummary = () => {
         </div>
       }>
         <Table 
-          dataSource={changesData} 
+          dataSource={changesData.sort((a, b) => b.date.localeCompare(a.date))} 
           columns={columns} 
           loading={loading}
           pagination={{ pageSize: 20 }}
