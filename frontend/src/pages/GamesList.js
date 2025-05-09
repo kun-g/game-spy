@@ -24,10 +24,14 @@ function GamesList() {
   const loadGames = useCallback(async () => {
     setLoading(true);
     try {
+      // 从 pagination 中提取所需的值，避免使用可变引用
+      const pageSize = pagination.pageSize;
+      const currentPage = pagination.current;
+      
       const response = await api.getGames(
         selectedPlatform,
-        pagination.pageSize,
-        (pagination.current - 1) * pagination.pageSize
+        pageSize,
+        (currentPage - 1) * pageSize
       );
       let gamesData = response.data;
       
@@ -50,14 +54,14 @@ function GamesList() {
       setGames(gamesData);
       setPagination(prev => ({
         ...prev,
-        total: gamesData.length > pagination.pageSize ? gamesData.length : pagination.pageSize * 10, // 估算总数
+        total: gamesData.length > pageSize ? gamesData.length : pageSize * 10, // 估算总数
       }));
     } catch (error) {
       console.error("获取游戏列表失败", error);
     } finally {
       setLoading(false);
     }
-  }, [selectedPlatform, selectedCategory, searchText, pagination.current, pagination.pageSize]);
+  }, [selectedPlatform, selectedCategory, searchText, pagination]);
 
   const loadCategories = useCallback(async () => {
     try {
