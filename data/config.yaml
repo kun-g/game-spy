@@ -1,8 +1,11 @@
 sites:
   - name: poki
-    url: https://www.poki.com/sitemap.xml
+    url: https://poki.com/en/sitemaps/games.xml
   - name: crazygames
-    url: https://www.crazygames.com/sitemap.xml
+    url: https://www.crazygames.com/sitemap
+  - name: lagged
+    url: https://lagged.com/sitemap.xml
     
 
 sitemap_path: data/sitemaps
+change_log_path: data/change_log

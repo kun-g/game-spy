@@ -6,6 +6,7 @@ import {
   AppstoreOutlined,
   TrophyOutlined,
   LineChartOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons';
 
 const { Sider } = Layout;
@@ -21,6 +22,7 @@ function AppSider() {
     if (path.startsWith('/games/')) return '2';
     if (path === '/rankings') return '3';
     if (path === '/stats') return '4';
+    if (path === '/changes') return '5';
     return '1';
   };
 
@@ -59,6 +61,11 @@ function AppSider() {
             key: '4',
             icon: <LineChartOutlined />,
             label: <Link to="/stats">平台数据</Link>,
+          },
+          {
+            key: '5',
+            icon: <HistoryOutlined />,
+            label: <Link to="/changes">变更汇总</Link>,
           },
         ]}
       />

@@ -10,6 +10,7 @@ import GamesList from './pages/GamesList';
 import GameDetail from './pages/GameDetail';
 import Rankings from './pages/Rankings';
 import PlatformStats from './pages/PlatformStats';
+import ChangesSummary from './pages/ChangesSummary';
 
 const { Content } = Layout;
 
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/games/:gameId" element={<GameDetail />} />
                 <Route path="/rankings" element={<Rankings />} />
                 <Route path="/stats" element={<PlatformStats />} />
+                <Route path="/changes" element={<ChangesSummary />} />
               </Routes>
             </Content>
           </Layout>

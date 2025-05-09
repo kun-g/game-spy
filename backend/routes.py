@@ -6,6 +6,7 @@ from typing import List, Dict, Any
 
 from backend.config import PAGINATION, PLATFORMS, TIME_RANGES
 from backend.models import Game, Category, Ranking, Statistics
+from backend.utils import summarize_changelog
 
 # 创建蓝图
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -90,6 +91,30 @@ def get_games_trend():
     
     trend_data = Statistics.get_games_trend(platform, days)
     return jsonify(trend_data)
+
+@api_bp.route('/changes/summary', methods=['GET'])
+def get_changes_summary():
+    """获取平台变更汇总"""
+    platform = request.args.get('platform', PLATFORMS[0])
+    days = request.args.get('days')
+    
+    if platform not in PLATFORMS:
+        return jsonify({"error": f"不支持的平台: {platform}"}), 400
+    
+    # 如果提供了天数，转换为整数
+    if days:
+        try:
+            days = int(days)
+        except ValueError:
+            return jsonify({"error": "天数必须是整数"}), 400
+    
+    summary = summarize_changelog(platform, days)
+    
+    # 检查是否有错误
+    if isinstance(summary, dict) and "error" in summary:
+        return jsonify(summary), 404
+        
+    return jsonify(summary)
 
 # 自定义错误处理
 @api_bp.errorhandler(404)

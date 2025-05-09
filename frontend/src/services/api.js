@@ -48,6 +48,15 @@ const api = {
     return axios.get(`${API_URL}/games/trend`, {
       params: { platform, days }
     });
+  },
+  
+  // 变更汇总
+  getChangesSummary: (platform = 'crazygames', days = null) => {
+    const params = { platform };
+    if (days !== null) {
+      params.days = days;
+    }
+    return axios.get(`${API_URL}/changes/summary`, { params });
   }
 };
 

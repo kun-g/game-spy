@@ -33,5 +33,6 @@ def get_game_urls(path):
     with open(f"{path}", "r") as f:
         sitemap_content = f.read()
     soup = BeautifulSoup(sitemap_content, 'xml')
-    loc_tags = soup.find_all('loc')
+    # 直接匹配<url>标签下的<loc>标签
+    loc_tags = soup.select('url > loc')
     return [tag.text for tag in loc_tags]

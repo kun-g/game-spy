@@ -1,5 +1,6 @@
 import requests
 import os
+import json
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from backend.lib.data import load_config
@@ -49,19 +50,24 @@ def clean_duplicate_sitemaps(site, sitemap_path):
     
     deleted_count = 0
     
-    # 对比相邻的文件
-    for i in range(len(files) - 1, 0, -1):
-        try:
-            new_urls = sorted(get_game_urls(os.path.join(sitemap_path, files[i])))
-            old_urls = sorted(get_game_urls(os.path.join(sitemap_path, files[i-1])))
-            deleted_urls = [url for url in new_urls if url not in old_urls]
-            added_urls = [url for url in old_urls if url not in new_urls]
-            if len(deleted_urls) == 0 and len(added_urls) == 0:
-                print(f"文件内容相同: {files[i-1]} 和 {files[i]}，删除较新的文件")
-                os.remove(os.path.join(sitemap_path, files[i]))
-                deleted_count += 1
-        except Exception as e:
-            print(f"比较文件时出错: {e}")
+    # 对比最新的两个文件
+    new_urls = sorted(get_game_urls(os.path.join(sitemap_path, files[-1])))
+    old_urls = sorted(get_game_urls(os.path.join(sitemap_path, files[-2])))
+    added_urls = [url for url in new_urls if url not in old_urls]
+    deleted_urls = [url for url in old_urls if url not in new_urls]
+
+    if len(deleted_urls) == 0 and len(added_urls) == 0:
+        print(f"文件内容相同: {files[-1]} 和 {files[-2]}，删除较新的文件")
+        os.remove(os.path.join(sitemap_path, files[-1]))
+        deleted_count += 1
+    else:
+        timestr = files[-1].split('.')[0].split('_')
+        with open(os.path.join(config['change_log_path'], f"{site}.jsonl"), 'a') as f:
+            f.write(json.dumps({
+                'datetime': f"{timestr[1]}T{timestr[2]}",
+                'deleted_urls': deleted_urls,
+                'added_urls': added_urls
+            }) + '\n')
     
     return deleted_count
 
