@@ -39,29 +39,6 @@ function PlatformStats() {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState(30);  // 默认30天
 
-  useEffect(() => {
-    loadPlatforms();
-  }, []);
-
-  useEffect(() => {
-    if (selectedPlatform) {
-      loadStats();
-      loadTrendData();
-    }
-  }, [selectedPlatform, timeRange]);
-
-  const loadPlatforms = async () => {
-    try {
-      const response = await api.getPlatforms();
-      setPlatforms(response.data);
-      if (response.data.length > 0) {
-        setSelectedPlatform(response.data[0]);
-      }
-    } catch (error) {
-      console.error('加载平台列表失败', error);
-    }
-  };
-
   const loadStats = useCallback(async () => {
     setLoading(true);
     try {
@@ -82,6 +59,22 @@ function PlatformStats() {
       console.error('加载趋势数据失败', error);
     }
   }, [selectedPlatform, timeRange]);
+
+  const loadPlatforms = async () => {
+    try {
+      const response = await api.getPlatforms();
+      setPlatforms(response.data);
+      if (response.data.length > 0) {
+        setSelectedPlatform(response.data[0]);
+      }
+    } catch (error) {
+      console.error('加载平台列表失败', error);
+    }
+  };
+
+  useEffect(() => {
+    loadPlatforms();
+  }, []);
 
   useEffect(() => {
     if (selectedPlatform) {

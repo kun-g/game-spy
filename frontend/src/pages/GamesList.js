@@ -21,29 +21,6 @@ function GamesList() {
     total: 0,
   });
 
-  useEffect(() => {
-    loadPlatforms();
-  }, []);
-
-  useEffect(() => {
-    if (selectedPlatform) {
-      loadGames();
-      loadCategories();
-    }
-  }, [selectedPlatform, selectedCategory, pagination.current, pagination.pageSize, loadGames, loadCategories]);
-
-  const loadPlatforms = async () => {
-    try {
-      const response = await api.getPlatforms();
-      setPlatforms(response.data);
-      if (response.data.length > 0) {
-        setSelectedPlatform(response.data[0]);
-      }
-    } catch (error) {
-      console.error('加载平台列表失败', error);
-    }
-  };
-
   const loadGames = useCallback(async () => {
     setLoading(true);
     try {
@@ -77,9 +54,10 @@ function GamesList() {
       }));
     } catch (error) {
       console.error("获取游戏列表失败", error);
+    } finally {
       setLoading(false);
     }
-  }, [selectedPlatform, pagination.pageSize, pagination.current, selectedCategory, searchText]);
+  }, [selectedPlatform, selectedCategory, searchText, pagination.current, pagination.pageSize]);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -89,6 +67,29 @@ function GamesList() {
       console.error("获取分类失败", error);
     }
   }, [selectedPlatform]);
+
+  const loadPlatforms = async () => {
+    try {
+      const response = await api.getPlatforms();
+      setPlatforms(response.data);
+      if (response.data.length > 0) {
+        setSelectedPlatform(response.data[0]);
+      }
+    } catch (error) {
+      console.error('加载平台列表失败', error);
+    }
+  };
+
+  useEffect(() => {
+    loadPlatforms();
+  }, []);
+
+  useEffect(() => {
+    if (selectedPlatform) {
+      loadGames();
+      loadCategories();
+    }
+  }, [selectedPlatform, selectedCategory, loadGames, loadCategories]);
 
   const handlePlatformChange = (value) => {
     setSelectedPlatform(value);

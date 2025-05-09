@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, Row, Col, Typography, Tag, Spin, Button, Divider, Descriptions } from 'antd';
 import { Line } from 'react-chartjs-2';
@@ -38,13 +38,8 @@ function GameDetail() {
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (gameId) {
-      loadGameDetail();
-    }
-  }, [gameId, loadGameDetail]);
-
-  const loadGameDetail = async () => {
+  // 将loadGameDetail定义提前，并用useCallback包装
+  const loadGameDetail = useCallback(async () => {
     setLoading(true);
     try {
       const response = await api.getGameDetail(gameId);
@@ -54,7 +49,13 @@ function GameDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [gameId]);
+
+  useEffect(() => {
+    if (gameId) {
+      loadGameDetail();
+    }
+  }, [gameId, loadGameDetail]);
 
   // 格式化评分历史数据为图表数据
   const formatRatingHistory = () => {
