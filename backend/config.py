@@ -27,7 +27,7 @@ PAGINATION = {
 }
 
 # 游戏平台配置
-PLATFORMS = os.getenv('PLATFORMS', 'poki,crazygames').split(',')
+PLATFORMS = os.getenv('PLATFORMS', 'poki,crazygames,gamedistribution').split(',')
 
 # 时间范围配置
 TIME_RANGES = [7, 30, 90, 180] 
