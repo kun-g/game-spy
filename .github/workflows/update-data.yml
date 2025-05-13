@@ -5,6 +5,9 @@ on:
     - cron: '0 */8 * * *'  # 每 8 小时执行一次（UTC 时间）
   workflow_dispatch:       # 手动触发支持
 
+permissions:
+  contents: write
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -12,6 +15,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
