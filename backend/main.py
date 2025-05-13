@@ -89,8 +89,6 @@ def main():
         with open(f'{SITEMAP_PATH}/{name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xml', 'w') as f:
             f.write(sitemap)
 
-    # 清理重复的sitemap文件
-    for target in config['sites']:
         deleted = clean_duplicate_sitemaps(target['name'], config['sitemap_path'])
         if deleted > 0:
             print(f"清理了 {deleted} 个重复的sitemap文件")
